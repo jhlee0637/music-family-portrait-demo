@@ -15,6 +15,11 @@ function rosterChanged() {
  renderCards();
 }
 
+const exampleRoster = [
+ ["달빛", "Jazz"], ["파도", "Pop"], ["별무리", "Jazz"],
+ ["새벽", "R&B / Soul"], ["노을", "Pop"], ["하늘", "Rock"], ["바람", "R&B / Soul"],
+];
+const rosterFields = [];
 for (const [index, member] of roster.entries()) {
  const row = document.createElement("div");
  row.className = "artist";
@@ -35,9 +40,20 @@ for (const [index, member] of roster.entries()) {
   member.group = select.value;
   rosterChanged();
  });
+ rosterFields.push({ input, select });
  row.append(label, select);
  $("artists").append(row);
 }
+$("fillExample").addEventListener("click", () => {
+ for (const [index, member] of roster.entries()) {
+  if (member.name) continue;
+  const [name, group] = exampleRoster[index];
+  const { input, select } = rosterFields[index];
+  input.value = member.name = name;
+  if (member.group === "Unclassified") select.value = member.group = group;
+ }
+ rosterChanged();
+});
 function renderCards(){
  const root=$("cards");root.replaceChildren();
  for(const t of TESTS){
