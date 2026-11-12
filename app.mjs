@@ -1,73 +1,100 @@
-import { GENRES, planFor } from "./shared/analysis.mjs";
 import { generateImage } from "./images.mjs";
 
 const $ = id => document.getElementById(id);
-const roster = Array.from({ length: 7 }, () => ({ name: "", group: "Unclassified" }));
-const exampleRoster = ["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"];
+const maxPeople = 7;
+const rows = new Map();
+let generating = false;
 
-function selectedPlan() {
- const members = roster.filter(member => member.name);
- return members.length ? planFor(members, `${$("layout").value}-1`) : null;
+function selection() {
+ const groups = new Map();
+ let valid = true;
+ for (const { genre, count } of rows.values()) {
+  const name = genre.value.trim();
+  const size = Number(count.value);
+  if (!name || !Number.isInteger(size) || size < 1 || size > maxPeople) {
+   valid = false;
+   continue;
+  }
+  groups.set(name, (groups.get(name) ?? 0) + size);
+ }
+ const total = [...groups.values()].reduce((sum, size) => sum + size, 0);
+ return { groups, total, valid: valid && total >= 1 && total <= maxPeople };
 }
 
-function rosterChanged() {
- const plan = selectedPlan();
- $("counts").textContent = `${plan?.members.length ?? 0} / 최대 7명`;
- $("selection").textContent = plan?.groups.map(group =>
-  group.members.map(member => member.name).join(" · ")).join(" | ") ?? "한 명 이상 입력하세요.";
- $("generate").disabled = !plan;
+function update() {
+ const { groups, total, valid } = selection();
+ $("counts").textContent = total > maxPeople ? `현재 ${total}명입니다. 최대 7명까지 선택할 수 있습니다.` :
+  `${total} / 최대 7명 · 각 줄에 장르와 인원을 입력하세요.`;
+ $("selection").textContent = [...groups].map(([genre, size]) => `${genre} ${size}명`).join(" · ");
+ $("generate").disabled = !valid || generating;
 }
 
-const rosterFields = [];
-for (const [index, member] of roster.entries()) {
+function addGenre(name = "", size = 1) {
  const row = document.createElement("div");
  row.className = "artist";
- const label = document.createElement("label");
- label.textContent = `멤버 ${index + 1}`;
- const input = document.createElement("input");
- input.maxLength = 100;
- label.append(input);
- const select = document.createElement("select");
- select.setAttribute("aria-label", `멤버 ${index + 1} 장르`);
- for (const genre of GENRES) select.add(new Option(genre === "Unclassified" ? "미분류" : genre, genre));
- select.value = member.group;
- input.addEventListener("input", () => {
-  member.name = input.value.trim();
-  rosterChanged();
+ const genreLabel = document.createElement("label");
+ genreLabel.textContent = "장르";
+ const genre = document.createElement("input");
+ genre.placeholder = "예: 재즈";
+ genre.value = name;
+ genreLabel.append(genre);
+ const countLabel = document.createElement("label");
+ countLabel.textContent = "인원";
+ const count = document.createElement("input");
+ count.type = "number";
+ count.min = 1;
+ count.max = maxPeople;
+ count.step = 1;
+ count.value = size;
+ countLabel.append(count);
+ const remove = document.createElement("button");
+ remove.type = "button";
+ remove.className = "subtle";
+ remove.textContent = "장르 삭제";
+ remove.addEventListener("click", () => {
+  rows.delete(row);
+  row.remove();
+  update();
  });
- select.addEventListener("change", () => {
-  member.group = select.value;
-  rosterChanged();
- });
- rosterFields.push({ input, select });
- row.append(label, select);
- $("artists").append(row);
+ for (const input of [genre, count]) input.addEventListener("input", update);
+ row.append(genreLabel, countLabel, remove);
+ rows.set(row, { genre, count });
+ $("genres").append(row);
+ update();
+ return genre;
 }
+
+$("addGenre").addEventListener("click", () => addGenre().focus());
 $("fillExample").addEventListener("click", () => {
- for (const [index, member] of roster.entries()) {
-  const { input, select } = rosterFields[index];
-  input.value = member.name = exampleRoster[index] ?? "";
-  select.value = member.group = member.name ? "Rock" : "Unclassified";
- }
- rosterChanged();
+ rows.clear();
+ $("genres").replaceChildren();
+ for (const [genre, size] of [["재즈", 2], ["록", 2], ["소울", 1]]) addGenre(genre, size);
 });
-$("layout").addEventListener("change", rosterChanged);
 
 $("generate").addEventListener("click", async () => {
- const plan = selectedPlan();
- if (!plan) return;
+ const { groups, total, valid } = selection();
+ if (!valid || generating) return;
+ generating = true;
+ update();
  const result = $("result");
- const data = await generateImage({
-  mode: plan.mode, variant: plan.variant, groupSizes: plan.groups.map(group => group.members.length),
- });
- const image = document.createElement("img");
- image.src = data.dataUrl;
- image.alt = `${plan.members.length}인 가족사진 배치 미리보기`;
- const save = document.createElement("a");
- save.href = data.dataUrl;
- save.download = "music-family-portrait.svg";
- save.textContent = "미리보기 저장";
- result.replaceChildren(image, save);
- result.hidden = false;
+ try {
+  const data = await generateImage({
+   mode: "genre", variant: 1, groupSizes: [...groups.values()],
+  });
+  const caption = document.createElement("p");
+  caption.textContent = [...groups].map(([genre, size]) => `${genre} ${size}명`).join(" · ");
+  const image = document.createElement("img");
+  image.src = data.dataUrl;
+  image.alt = `${total}인 가족사진 배치 미리보기`;
+  const save = document.createElement("a");
+  save.href = data.dataUrl;
+  save.download = "music-family-portrait.svg";
+  save.textContent = "미리보기 저장";
+  result.replaceChildren(caption, image, save);
+  result.hidden = false;
+ } finally {
+  generating = false;
+  update();
+ }
 });
-rosterChanged();
+addGenre();
