@@ -10,8 +10,16 @@ export function promptFor({mode,variant}){
   const layout=mode==="genre"?"Arrange seven fictional adult people into visually distinct clusters, with small spaces between each group.":"Arrange seven fictional adult people in one close-knit group.";
   return "Create a sophisticated, photorealistic picture of seven FICTIONAL adult people, no celebrities, no logos, no typography. Scene: "+setting+". "+layout+" Diverse appearances and ages (all adults), natural expressions, clearly visible seven faces, landscape 3:2 composition.";
 }
-export function mockSvg({mode,variant}){
+export function mockSvg({mode,variant}, groupSizes = mode === "genre" ? [3, 4] : [7]){
   const bg=variant===1?"#e0c9b1":"#a9d8d0";
-  const xs=mode==="genre"?[160,265,370,535,640,745,850]:[185,300,415,530,645,760,875];
+  let position = 0;
+  const offsets = groupSizes.flatMap(size => {
+    const group = Array.from({length: size}, () => position++);
+    position += 0.48;
+    return group;
+  });
+  const center = (offsets.at(-1) ?? 0) / 2;
+  const spacing = Math.min(115, 380 / Math.max(center, 1));
+  const xs = offsets.map(offset => 512 + (offset - center) * spacing);
   return '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="682" viewBox="0 0 1024 682"><rect width="1024" height="682" fill="'+bg+'"/><text x="512" y="78" font-size="28" text-anchor="middle" font-family="sans-serif" fill="#253a40">MOCK IMAGE · '+mode.toUpperCase()+' '+variant+'</text>'+xs.map((x,i)=>'<circle cx="'+x+'" cy="'+(i%2?296:274)+'" r="43" fill="#735b55"/><rect x="'+(x-55)+'" y="335" width="110" height="180" rx="42" fill="'+(i%2?"#415b69":"#b47c6f")+'"/>').join("")+'<text x="512" y="625" text-anchor="middle" font-family="sans-serif" font-size="23" fill="#253a40">API test placeholder — no paid image generated</text></svg>';
 }

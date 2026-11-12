@@ -1,6 +1,9 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Music Family Portrait</title><link rel="stylesheet" href="./style.css"></head><body>
-<main><header><h1>Music Family Portrait</h1><p>직접 고른 일곱 명으로 네 가지 가상 가족사진을 비교합니다.</p></header>
-<section class="panel"><h2>1 · 멤버와 장르 선택</h2><p>이름 또는 별칭을 일곱 칸에 입력하고 장르를 선택하세요. 이름과 장르는 브라우저에서만 표시됩니다.</p><button id="fillExample" type="button" class="subtle">예시로 채우기</button><div id="artists" class="artist-grid"></div><p id="counts" role="status"></p></section>
-<section class="panel"><h2>2 · 사진 네 장 생성</h2><p>같은 Top 7 두 컷과, 같은 멤버의 장르별 그룹 두 컷입니다. 장르 배치는 카드에 표시되며, 이미지는 일곱 명의 가상 인물을 공통 구도로 그립니다.</p><p id="imageStatus"></p><div id="cards" class="cards"></div></section>
-<section class="panel"><h2>테스트 기록</h2><button id="downloadLog" class="subtle">JSON 기록 다운로드</button><p class="hint">테스트 결과는 이 브라우저 세션에만 남습니다.</p><pre id="log">아직 실행된 테스트 없음</pre></section>
+<main><header><h1>Music Family Portrait</h1><p>직접 고른 1~7명으로 가족사진 한 장을 구성합니다.</p></header>
+<section class="panel"><h2>1 · 멤버와 장르 선택</h2><p>이름 또는 별칭을 최대 일곱 명까지 입력하고 장르를 선택하세요. 이름과 장르는 브라우저에서만 표시됩니다.</p><button id="fillExample" type="button" class="subtle">비틀즈 예시 불러오기</button><div id="artists" class="artist-grid"></div><p id="counts" role="status"></p></section>
+<section class="panel"><h2>2 · 가족사진</h2>
+<p id="imageStatus">실사풍 가족사진의 인원과 배치를 확인하는 모의 데모입니다.</p>
+<label>사진 구성 <select id="layout"><option value="top7">한 그룹</option><option value="genre">장르별 그룹</option></select></label>
+<p id="selection"></p><button id="generate" type="button" disabled>사진 1장 만들기</button>
+<div id="result" class="card" hidden></div></section>
 <footer>Music Family Portrait</footer></main><script type="module" src="./app.mjs"></script></body></html>
